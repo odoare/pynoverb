@@ -126,7 +126,7 @@ canvas_frame.grid(row=0, column=0, padx=10, pady=0, sticky="n")
 ttk.Label(canvas_frame, text="Room").grid(row=0, column=0, padx=5, pady=5)
 
 # Create a canvas for drawing
-canvas = tk.Canvas(canvas_frame, width=400, height=400, bg='white')
+canvas = tk.Canvas(canvas_frame, width=CANVAS_SIZE, height=CANVAS_SIZE, bg='white')
 canvas.grid(row=1, column=0, padx=5, pady=5)
 canvas.bind("<Button-1>", add_entry)
 
@@ -136,11 +136,10 @@ list_frame.grid(row=1, column=1, padx=10, pady=10, sticky="n")
 ttk.Label(list_frame, text="Sources list").grid(row=0, column=0, padx=5, pady=5)
 
 # Create a ScrolledListBox for the source entries
-source_listbox = tk.Listbox(list_frame, selectmode=tk.SINGLE,height=15)
+source_listbox = tk.Listbox(list_frame, selectmode=tk.SINGLE,height=20)
 source_listbox.grid(row=1, column=0, padx=5, pady=5)
 source_listbox.bind('<<ListboxSelect>>', update_selected_entry)
 source_listbox.bind('<Delete>', delete_entry)
-
 
 # Create a frame for the size and listener
 sizelist_frame = tk.Frame(root)
@@ -200,7 +199,6 @@ for i, label in enumerate(source_labels):
     source_entries[label].bind("<Return>", modify_entry)
     source_entries[label].bind('<Tab>', no_tab)
 
-
 # Create a frame for the buttons
 buttons_frame = ttk.Frame(root)
 buttons_frame.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="w")
@@ -222,19 +220,19 @@ file_frame = ttk.Frame(root)
 file_frame.grid(row=3, column=0, columnspan=3, padx=10, pady=10, sticky="w")
 
 # Create a "Browse" button for directory selection
-browse_button = ttk.Button(file_frame, text="Browse", command=browse_directory)
+browse_button = ttk.Button(file_frame, text="Browse for directory", command=browse_directory)
 browse_button.grid(row=0, column=0, padx=5, pady=5)
 
 # Create an entry widget for directory path
-directory_entry = ttk.Entry(file_frame)
+directory_entry = ttk.Entry(file_frame,width=50)
 directory_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 
 # Create a label for the filename entry
-ttk.Label(file_frame, text="Filename").grid(row=0, column=2, padx=5, pady=5, sticky="w")
+ttk.Label(file_frame, text="Filename base").grid(row=1, column=0, padx=5, pady=5, sticky="w")
 
 # Create an entry widget for the filename
 filename_entry = ttk.Entry(file_frame)
-filename_entry.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
+filename_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
 
 # Initialize the canvas
 update_canvas()
