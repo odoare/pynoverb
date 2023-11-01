@@ -2,15 +2,24 @@ import tkinter as tk
 from tkinter import ttk, filedialog
 from pynoverb import rev3_binau
 import numpy as np
+import matplotlib.pyplot as plt
 
 CANVAS_SIZE = 400
 global selind
 global f
 
 def calculate_and_export():
-    n = 100
+    n = 50
     l = np.array([float(size_entries[label].get()) for label in size_labels])
-    
+    x = np.array([float(listener_entries[label].get()) for label in listener_labels])
+    d = 1 - float(damping_entry.get())
+    for ind, s in enumerate(source_listbox.get(0, tk.END)):
+        s = np.array([float(val) for val in s])  # Convert the string values to float
+        print(str(ind)+'     '+str(s))
+        impl,impr = rev3_binau(n=n,l=l,x=x,s=s,d=d)
+        plt.plot(impl)
+        plt.plot(impr)
+    plt.show()
     pass
 
 def browse_directory():
