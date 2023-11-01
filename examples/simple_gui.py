@@ -1,17 +1,16 @@
 import tkinter as tk
 from tkinter import ttk, filedialog
 from pynoverb import rev3_binau
+import numpy as np
 
 CANVAS_SIZE = 400
 global selind
 global f
 
-def calculate():
-    # Add your calculate function logic here
-    pass
-
-def export():
-    # Add your export function logic here
+def calculate_and_export():
+    n = 100
+    l = np.array([float(size_entries[label].get()) for label in size_labels])
+    
     pass
 
 def browse_directory():
@@ -149,7 +148,7 @@ ttk.Label(sizelist_frame, text="").grid(row=0, column=0, padx=5, pady=5)
 # Create a frame for the "Size" group of controls
 size_frame = ttk.Frame(sizelist_frame)
 size_frame.grid(row=1, column=0, padx=10, pady=10, sticky="w")
-ttk.Label(size_frame, text="Size").grid(row=0, column=1, padx=5, pady=5, sticky="W")
+ttk.Label(size_frame, text="Room dimensions").grid(row=0, column=1, padx=5, pady=5, sticky="W")
 
 # Create three number entries for "Size" with default values
 size_entries = {}
@@ -199,21 +198,32 @@ for i, label in enumerate(source_labels):
     source_entries[label].bind("<Return>", modify_entry)
     source_entries[label].bind('<Tab>', no_tab)
 
+# Create a frame for the room properties
+room_frame = ttk.Frame(root)
+room_frame.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="w")
+
+# Create a label for the filename entry
+ttk.Label(room_frame, text="Wall damping (typical range [0.01,0.5])").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+
+# Create an entry widget for the room damping
+damping_entry = ttk.Entry(room_frame)
+damping_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+
 # Create a frame for the buttons
 buttons_frame = ttk.Frame(root)
-buttons_frame.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="w")
+buttons_frame.grid(row=4, column=0, columnspan=3, padx=10, pady=10, sticky="e")
 
-# Create the "calculate" button
-calculate_button = ttk.Button(buttons_frame, text="Calculate", command=calculate)
-calculate_button.grid(row=0, column=0, padx=5, pady=5)
+# # Create the "calculate" button
+# calculate_button = ttk.Button(buttons_frame, text="Calculate", command=calculate)
+# calculate_button.grid(row=0, column=0, padx=5, pady=5)
 
 # Create the "export" button
-export_button = ttk.Button(buttons_frame, text="Export", command=export)
-export_button.grid(row=0, column=1, padx=5, pady=5)
+export_button = ttk.Button(buttons_frame, text="Calculate and export IRs", command=calculate_and_export)
+export_button.grid(row=0, column=0, padx=5, pady=5)
 
 # Create the "quit" button
 quit_button = ttk.Button(buttons_frame, text="Quit", command=quit_app)
-quit_button.grid(row=0, column=2, padx=5, pady=5)
+quit_button.grid(row=0, column=1, padx=5, pady=5)
 
 # Create a frame for directory and filename selection
 file_frame = ttk.Frame(root)
