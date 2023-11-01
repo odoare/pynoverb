@@ -45,23 +45,21 @@ def update_canvas(event=None):
     f = (CANVAS_SIZE-50)/maxlength
     canvas.create_rectangle(20, swapy(20), 20 + x*f, swapy(20+y*f), outline="black")
     canvas.create_rectangle(20, swapy(30+y*f), 20 + x*f, swapy(30+(z+y)*f), outline="black")
-
-    for entry in source_listbox.get(0, tk.END):
-        entry = [float(val) for val in entry]  # Convert the string values to float
-        canvas.create_oval(20 + entry[0]*f - 4, swapy(20+entry[1]*f - 4), 20 + entry[0]*f + 4, swapy(20+entry[1]*f + 4), fill="red")
-        canvas.create_oval(20 + entry[0]*f - 4, swapy(30+(entry[2]+y)*f - 4), 20 + entry[0]*f + 4, swapy(30+(entry[2]+y)*f + 4), fill="red")
-
     # Draw the source circle in the xy box
-    canvas.create_oval(20 + source_values[0]*f - 4, swapy(20+source_values[1]*f - 4), 20 + source_values[0]*f + 4, swapy(20+source_values[1]*f + 4), fill="green")
-
+    canvas.create_oval(20 + source_values[0]*f - 8, swapy(20+source_values[1]*f - 8), 20 + source_values[0]*f + 8, swapy(20+source_values[1]*f + 8),outline='red')
     # Draw the listener circle in xy box
     canvas.create_oval(20 + listener_values[0]*f - 8, swapy(20+listener_values[1]*f - 8), 20 + listener_values[0]*f + 8, swapy(20+listener_values[1]*f + 8), fill="blue")
-
     # Draw the source circle in the xz box
-    canvas.create_oval(20 + source_values[0]*f - 4, swapy(30+(source_values[2]+y)*f - 4), 20 + source_values[0]*f + 4, swapy(30+(source_values[2]+y)*f + 4), fill="green")
-
+    canvas.create_oval(20 + source_values[0]*f - 8, swapy(30+(source_values[2]+y)*f - 8), 20 + source_values[0]*f + 8, swapy(30+(source_values[2]+y)*f + 8),outline='red')
     # Draw the listener circle in xz box
     canvas.create_oval(20 + listener_values[0]*f - 8, swapy(30+(listener_values[2]+y)*f - 8), 20 + listener_values[0]*f + 8, swapy(30+(listener_values[2]+y)*f + 8), fill="blue")
+
+    for ind, entry in enumerate(source_listbox.get(0, tk.END)):
+        entry = [float(val) for val in entry]  # Convert the string values to float
+        #canvas.create_oval(20 + entry[0]*f - 4, swapy(20+entry[1]*f - 4), 20 + entry[0]*f + 4, swapy(20+entry[1]*f + 4), fill="red")
+        #canvas.create_oval(20 + entry[0]*f - 4, swapy(30+(entry[2]+y)*f - 4), 20 + entry[0]*f + 4, swapy(30+(entry[2]+y)*f + 4), fill="red")
+        canvas.create_text(20 + entry[0]*f, swapy(18+entry[1]*f), text=str(ind), font=('Helvetica 12 bold'))
+        canvas.create_text(20 + entry[0]*f, swapy(28+(entry[2]+y)*f ), text=str(ind), font=('Helvetica 12 bold') )
 
     # Update the selected entry in the scrolled listbox
     selected_index = source_listbox.curselection()
@@ -120,12 +118,12 @@ def modify_entry(event=None):
 
 # Create the main window
 root = tk.Tk()
-root.title("Pynoverb GUI")
+root.title("Pynoverb simple GUI")
 
 # Create a frame for the canvas and list box
 canvas_frame = tk.Frame(root)
 canvas_frame.grid(row=0, column=0, padx=10, pady=0, sticky="n")
-ttk.Label(canvas_frame, text="Canvas").grid(row=0, column=0, padx=5, pady=5)
+ttk.Label(canvas_frame, text="Room").grid(row=0, column=0, padx=5, pady=5)
 
 # Create a canvas for drawing
 canvas = tk.Canvas(canvas_frame, width=400, height=400, bg='white')
