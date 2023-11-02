@@ -16,6 +16,9 @@ def calculate_and_export():
     for ind, s in enumerate(source_listbox.get(0, tk.END)):
         s = np.array([float(val) for val in s])  # Convert the string values to float
         print(str(ind)+'     '+str(s))
+        source_listbox.selection_set((ind,))
+        update_selected_entry()
+        root.update()
         impl,impr = rev3_binau(n=n,l=l,x=x,s=s,d=d)
         plt.plot(impl)
         plt.plot(impr)
