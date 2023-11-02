@@ -1,27 +1,33 @@
+import sys
+sys.path.insert(0, "..")
+
 import tkinter as tk
 from tkinter import ttk, filedialog
-from pynoverb import rev3_binau
+from pynoverb import rev3_binau, get_n_from_r
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.io import wavfile
 
 CANVAS_SIZE = 400
 global selind
 global f
 
 def calculate_and_export():
-    n = 50
     l = np.array([float(size_entries[label].get()) for label in size_labels])
     x = np.array([float(listener_entries[label].get()) for label in listener_labels])
-    d = 1 - float(damping_entry.get())
+    r = 1 - float(damping_entry.get())
+    n = int(get_n_from_r(r))
     for ind, s in enumerate(source_listbox.get(0, tk.END)):
         s = np.array([float(val) for val in s])  # Convert the string values to float
         print(str(ind)+'     '+str(s))
         source_listbox.selection_set((ind,))
         update_selected_entry()
         root.update()
-        impl,impr = rev3_binau(n=n,l=l,x=x,s=s,d=d)
+        impl,impr = rev3_binau(n=n,l=l,x=x,s=s,r=r)
         plt.plot(impl)
         plt.plot(impr)
+        fichier = directory_entry.get()+'/'+filename_entry.get()+'_'+str(ind)+'.wav'
+        wavfile.write(fichier,44100,np.array([impl,impr]).T)
     plt.show()
     pass
 
@@ -220,14 +226,11 @@ ttk.Label(room_frame, text="Wall damping (typical range [0.01,0.5])").grid(row=0
 # Create an entry widget for the room damping
 damping_entry = ttk.Entry(room_frame)
 damping_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+damping_entry.insert(0, str(0.1))
 
 # Create a frame for the buttons
 buttons_frame = ttk.Frame(root)
 buttons_frame.grid(row=4, column=0, columnspan=3, padx=10, pady=10, sticky="e")
-
-# # Create the "calculate" button
-# calculate_button = ttk.Button(buttons_frame, text="Calculate", command=calculate)
-# calculate_button.grid(row=0, column=0, padx=5, pady=5)
 
 # Create the "export" button
 export_button = ttk.Button(buttons_frame, text="Calculate and export IRs", command=calculate_and_export)
