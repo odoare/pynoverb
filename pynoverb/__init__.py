@@ -1,6 +1,6 @@
 # __init__.py
 
-from .pynoverb import (get_n_from_r,
+from .reverbs import (get_n_from_r,
                             rev1, 
                             rev2,
                             rev2_binau,
