@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from setuptools import setup, find_packages, find_namespace_packages
+from setuptools import setup, find_packages
 
 DESCRIPTION = 'Impulse responses creation for room reverberation'
 LONG_DESCRIPTION = """
@@ -18,7 +18,7 @@ setup(
     packages=find_packages(),
     package_data={'pynoverb': ['hrtf/mit_kemar/*.wav']},
     include_package_data=True,
-    install_requires=['numpy','matplotlib','numba'],
+    install_requires=['numpy','scipy','numba'],
     keywords=['Python', 'Binaural processing', 'Signal processing', 'Artificial reverberation'],
     classifiers=[
         "Development Status :: 3 - Alpha",

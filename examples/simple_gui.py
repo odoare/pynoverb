@@ -1,11 +1,11 @@
-import sys
-sys.path.insert(0, "..")
+# import sys
+# sys.path.insert(0, "..")
 
 import tkinter as tk
 from tkinter import ttk, filedialog
 from pynoverb import rev3_binau, get_n_from_r
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from scipy.io import wavfile
 
 CANVAS_SIZE = 400
@@ -24,11 +24,11 @@ def calculate_and_export():
         update_selected_entry()
         root.update()
         impl,impr = rev3_binau(n=n,l=l,x=x,s=s,r=r)
-        plt.plot(impl)
-        plt.plot(impr)
+        # plt.plot(impl)
+        # plt.plot(impr)
         fichier = directory_entry.get()+'/'+filename_entry.get()+'_'+str(ind)+'.wav'
         wavfile.write(fichier,44100,np.array([impl,impr]).T)
-    plt.show()
+    # plt.show()
     pass
 
 def browse_directory():
