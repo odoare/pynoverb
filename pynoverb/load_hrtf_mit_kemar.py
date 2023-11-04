@@ -16,23 +16,23 @@ NORM = 2**15
 lhrtf = np.zeros((len(ELEVATIONS),lmax,L))
 rhrtf = np.zeros((len(ELEVATIONS),lmax,L))
 for ind1,el in enumerate(ELEVATIONS):
-    print(ind1)
+    #print(ind1)
     for ind2,az in enumerate(np.arange(0,360,AZIMUTHSTEPS[ind1])):
         chemin = datapath
         if az<=180:
             fich = chemin+'H'+str(el)+'e'+str(round(az)).zfill(3)+'a.wav'
-            print(fich)
+            #print(fich)
             fs,y = wavfile.read(fich)
             lhrtf[ind1,ind2,:] = y[:,0]
             rhrtf[ind1,ind2,:] = y[:,1]
         else:
             try:
                 fich = chemin+'H'+str(el)+'e'+str(int(np.round(360-az))).zfill(3)+'a.wav'
-                print(fich)
+                #print(fich)
                 fs,y = wavfile.read(fich)
             except:
                 fich = chemin+'H'+str(el)+'e'+str(int(np.round(360-az)+1)).zfill(3)+'a.wav'
-                print(fich)
+                #print(fich)
                 fs,y = wavfile.read(fich)
             lhrtf[ind1,ind2,:] = y[:,1]
             rhrtf[ind1,ind2,:] = y[:,0]

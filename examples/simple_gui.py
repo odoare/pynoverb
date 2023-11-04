@@ -1,5 +1,5 @@
 # import sys
-# sys.path.insert(0, "..")
+# sys.path.insert(0, "../pynoverb")
 
 import tkinter as tk
 from tkinter import ttk, filedialog
@@ -19,7 +19,7 @@ def calculate_and_export():
     n = int(get_n_from_r(r))
     for ind, s in enumerate(source_listbox.get(0, tk.END)):
         s = np.array([float(val) for val in s])  # Convert the string values to float
-        print(str(ind)+'     '+str(s))
+        # print(str(ind)+'     '+str(s))
         source_listbox.selection_set((ind,))
         update_selected_entry()
         root.update()
@@ -91,19 +91,19 @@ def delete_entry(event=None):
     global selind
     # selected_index = source_listbox.curselection()
     # print(selected_index)
-    print(selind)
+    # print(selind)
     if selind:
         source_listbox.delete(selind)
         # Update canvas after deleting an entry
     update_canvas()
 
 def update_selected_entry(event=None):
-    print('In update_selected_entry')
+    # print('In update_selected_entry')
     global selind
     selected_index = source_listbox.curselection()
     selind = selected_index
-    print('selind')
-    print(selind)
+    # print('selind')
+    # print(selind)
     if selected_index:
         selected_entry = source_listbox.get(selected_index[0])
         for i, label in enumerate(source_labels):
@@ -113,7 +113,7 @@ def update_selected_entry(event=None):
 
 
 def add_entry(event):
-    print('In add_entry')
+    # print('In add_entry')
     global f
     x, y = event.x - 20, event.y + 20
     source_listbox.insert(tk.END, (round(x/f,2), round(swapy(y)/f,2), round(float(size_entries["z"].get())/2,2) ) )
@@ -121,15 +121,15 @@ def add_entry(event):
     update_selected_entry()
 
 def modify_entry(event=None):
-    print('In modify_entry')
+    # print('In modify_entry')
     global selind
     source_values = [float(source_entries[label].get()) for label in source_labels]
-    print('selind')
-    print(selind)
+    # print('selind')
+    # print(selind)
     if selind:
         source_listbox.delete(selind)
         source_listbox.insert(selind, source_values)
-        print (source_values)
+        # print (source_values)
     update_canvas()
 
 

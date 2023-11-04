@@ -7,5 +7,6 @@ from .pynoverb import (get_n_from_r,
                             rev3,
                             rev3_binau,
                             rev3_binau_noel,
+                            rev3_binau_hfdamp,
                             rev4)
 

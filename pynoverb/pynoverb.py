@@ -4,6 +4,8 @@ from numba import njit,prange
 
 from .load_hrtf_mit_kemar import L, ELEVATIONS, AZIMUTHSTEPS, lhrtf, rhrtf
 
+FSTART = 20_000
+
 @njit()
 def azim(xp,x,rnd=5):
     """Azimuthal angle calculation
@@ -89,6 +91,35 @@ def get_n_from_r(r):
         float: Number of reflections
     """
     return np.log10(1e-5)/np.log10(r)
+
+@njit()
+def lop(fs,d,n,x,order=2):
+    """Lowpass filter, 1st order
+    y[k] = alpha x[k] + (1-alpha) y[k-1]
+    alpha = 1-exp(-2*pi*f/fs)
+
+    Args:
+        fs (float): Sampling frequency
+        d (float): high frequency damping
+        n (int) : Number of wall rebounds
+        x (numpy.array): input samples
+
+    Returns:
+        numpy.array: output samples
+    """
+    f = FSTART*(np.exp(-d*n))
+    alpha = 1-np.exp(-2*np.pi*f/fs)
+    alpha1 = 1-alpha
+    y = np.zeros(len(x))
+    y[0] = alpha*x[0]
+    for i in range(1,len(x)):
+        y[i] = alpha*x[i] + alpha1*y[i-1]
+    for j in range(order-1):
+        y[0] = alpha*y[0]
+        for i in range(1,len(x)):
+            y[i] = alpha*y[i] + alpha1*y[i-1]
+    return y
+
 
 #%%
 @njit(parallel=True)
@@ -203,7 +234,7 @@ def rev2_binau(n=100,
             damp = r**(abs(i0)+abs(i1))
             outl[indice:indice+L] += lhrtf[azim_ind(xp,x),:]*(-1)**(i0+i1)*damp/dist**(3/4)
             outr[indice:indice+L] += rhrtf[azim_ind(xp,x),:]*(-1)**(i0+i1)*damp/dist**(3/4)
-        print(str(i0)+'/'+str(2*n))
+        print(str(i0+n)+'/'+str(2*n))
     return outl,outr
 
 @njit()
@@ -252,7 +283,7 @@ def rev3_binau_noel(n=50,
                 damp = r**(abs(i0)+abs(i1)+abs(i2))
                 outl[indice:indice+L] += lhrtf[4,azim_ind(xp[0:2],x[0:2]),:]*(-1)**(i0+i1+i2)*damp/dist
                 outr[indice:indice+L] += rhrtf[4,azim_ind(xp[0:2],x[0:2]),:]*(-1)**(i0+i1+i2)*damp/dist
-        print(str(i0)+'/'+str(2*n))
+        print(str(i0+n)+'/'+str(2*n))
     return outl,outr
 
 @njit()
@@ -300,7 +331,59 @@ def rev3_binau(n=100,
                 alpha_i = elev_ind(xp,x)
                 outl[indice:indice+L] += lhrtf[alpha_i,azim_ind(xp[0:2],x[0:2],rnd=AZIMUTHSTEPS[alpha_i]),:]*(-1)**(i0+i1+i2)*damp/dist
                 outr[indice:indice+L] += rhrtf[alpha_i,azim_ind(xp[0:2],x[0:2],rnd=AZIMUTHSTEPS[alpha_i]),:]*(-1)**(i0+i1+i2)*damp/dist
-        print(str(i0)+'/'+str(2*n))
+        print(str(i0+n)+'/'+str(2*n))
+    return outl,outr
+
+@njit()
+def rev3_binau_hfdamp(n=100,
+         fs=44100,
+         l=np.array((4,3,3.5)),
+         s=np.array((1,2,3)),
+         x=np.array((2,1,0.7)),
+         r=0.9,
+         d=0.1):
+    """
+    3D reverberator, stereo, binaural version
+    For each echo grain incoming to the receiver,
+    an HRTF is applied base on the azimutal and elevation angles
+    between head and beam direction.
+
+    Args:
+        n (int, optional): Number of rebounds. Defaults to 100.
+        fs (int, optional): Sampling frequency. Defaults to 44100.
+        l (numpy.array, optional): Room dimensions in meters. Defaults to np.array((4,3,3.5)).
+        s (numpy.array, optional): Source position in meters. Defaults to np.array((1,2,3)).
+        x (numpy.array, optional): Receiver position in meters. Defaults to np.array((2,1,0.7)).
+        r (float, optional): Wall reflexion coef. Defaults to 0.9
+        d (float, optional): Wall reflexion high frequency damping. Defaults to 0.1
+
+    Returns:
+        tuple: Acoustic impulse response from source to receiver in the form
+        of a tuple of numpy arrays.
+    """
+    dur = np.sqrt(np.sum(((n+1)*l)**2))/340
+    #print(dur)
+    long = int(np.ceil(dur*fs))
+    #print(long)
+    outl = np.zeros(long+L)
+    outr = np.zeros(long+L)
+    xp = np.zeros(3)
+    for i0 in prange(-n,n+1):
+        xp[0] = 2*np.ceil(i0/2)*l[0]+(-1)**(i0)*s[0]
+        for i1 in prange(-n,n+1):
+            xp[1] = 2*np.ceil(i1/2)*l[1]+(-1)**(i1)*s[1]
+            for i2 in prange(-n,n+1):
+                xp[2] = 2*np.ceil(i2/2)*l[2]+(-1)**(i2)*s[2]
+                dist = np.sqrt((xp[0]-x[0])**2+(xp[1]-x[1])**2+(xp[2]-x[2])**2)
+                # Starting index for rebound sound (time of arrival is dist/340)
+                indice = int(np.round(dist/340*fs))
+                # absorbtion coefficient
+                a = r**(abs(i0)+abs(i1)+abs(i2))
+                alpha_i = elev_ind(xp,x)
+                N = i0+i1+i2
+                outl[indice:indice+L] += lop(fs,d,np.abs(N),lhrtf[alpha_i,azim_ind(xp[0:2],x[0:2],rnd=AZIMUTHSTEPS[alpha_i]),:])*(-1)**(i0+i1+i2)*a/dist
+                outr[indice:indice+L] += lop(fs,d,np.abs(N),rhrtf[alpha_i,azim_ind(xp[0:2],x[0:2],rnd=AZIMUTHSTEPS[alpha_i]),:])*(-1)**(i0+i1+i2)*a/dist
+        print(str(i0+n)+'/'+str(2*n))
     return outl,outr
 
 @njit(parallel=True)
@@ -346,10 +429,10 @@ def rev3(n=100,
                 if damp>1:
                     print(damp)
                 out[indice] += (-1)**(i0+i1+i2)*damp/dist
-        print(str(i0)+'/'+str(2*n))
+        print(str(i0+n)+'/'+str(2*n))
     return out
 
-@njit(parallel=True,nopython=True)
+@njit(parallel=True)
 def rev4(n=50,
          fs=44100,
          l=np.array((4,3,3.5,3.8)),
@@ -392,5 +475,5 @@ def rev4(n=50,
                     indice = int(np.round(time*fs))
                     damp = r**(abs(i0)+abs(i1)+abs(i2)+abs(i3))
                     out[indice] += (-1)**(i0+i1+i2+i3)*damp/dist**(4/3)
-        print(str(i0)+'/'+str(2*n))
+        print(str(i0+n)+'/'+str(2*n))
     return out
