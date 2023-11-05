@@ -4,7 +4,7 @@ from numba import njit,prange
 
 from .load_hrtf_mit_kemar import L, ELEVATIONS, AZIMUTHSTEPS, lhrtf, rhrtf
 
-FSTART = 20_000
+OMEGASTART = 20_000 * 2 * np.pi
 
 @njit()
 def azim(xp,x,rnd=5):
@@ -90,11 +90,11 @@ def get_n_from_r(r):
     Returns:
         float: Number of reflections
     """
-    return np.log10(1e-5)/np.log10(r)
+    return np.log10(1e-3)/np.log10(r)
 
 @njit()
-def lop(fs,d,n,x,order=2):
-    """Lowpass filter, 1st order
+def lop(fs,d,n,x,order=1):
+    """Lowpass filter, 1st order cascaded
     y[k] = alpha x[k] + (1-alpha) y[k-1]
     alpha = 1-exp(-2*pi*f/fs)
 
@@ -107,9 +107,9 @@ def lop(fs,d,n,x,order=2):
     Returns:
         numpy.array: output samples
     """
-    f = FSTART*(np.exp(-d*n))
-    alpha = 1-np.exp(-2*np.pi*f/fs)
-    alpha1 = 1-alpha
+    om = OMEGASTART*(np.exp(-d*n))
+    alpha1 = np.exp(-om/fs)
+    alpha = 1 - alpha1
     y = np.zeros(len(x))
     y[0] = alpha*x[0]
     for i in range(1,len(x)):
