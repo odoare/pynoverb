@@ -1,9 +1,9 @@
-# import sys
-# sys.path.insert(0, "../pynoverb")
+import sys
+sys.path.insert(0, "../pynoverb")
 
 import tkinter as tk
 from tkinter import ttk, filedialog
-from pynoverb import rev3_binau, get_n_from_r
+from pynoverb import rev3_binau_hfdamp, get_n_from_r
 import numpy as np
 # import matplotlib.pyplot as plt
 from scipy.io import wavfile
@@ -16,6 +16,7 @@ def calculate_and_export():
     l = np.array([float(size_entries[label].get()) for label in size_labels])
     x = np.array([float(listener_entries[label].get()) for label in listener_labels])
     r = 1 - float(damping_entry.get())
+    d = float(hfdamping_entry.get())
     n = int(get_n_from_r(r))
     for ind, s in enumerate(source_listbox.get(0, tk.END)):
         s = np.array([float(val) for val in s])  # Convert the string values to float
@@ -23,7 +24,7 @@ def calculate_and_export():
         source_listbox.selection_set((ind,))
         update_selected_entry()
         root.update()
-        impl,impr = rev3_binau(n=n,l=l,x=x,s=s,r=r)
+        impl,impr = rev3_binau_hfdamp(n=n,l=l,x=x,s=s,r=r,d=d)
         # plt.plot(impl)
         # plt.plot(impr)
         fichier = directory_entry.get()+'/'+filename_entry.get()+'_'+str(ind)+'.wav'
@@ -149,7 +150,7 @@ canvas.bind("<Button-1>", add_entry)
 
 # Create a frame for list box
 list_frame = tk.Frame(canvas_frame)
-list_frame.grid(row=1, column=1, padx=10, pady=10, sticky="n")
+list_frame.grid(row=1, column=1, padx=10, pady=5, sticky="n")
 ttk.Label(list_frame, text="Sources list").grid(row=0, column=0, padx=5, pady=5)
 
 # Create a ScrolledListBox for the source entries
@@ -220,13 +221,17 @@ for i, label in enumerate(source_labels):
 room_frame = ttk.Frame(root)
 room_frame.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="w")
 
-# Create a label for the filename entry
-ttk.Label(room_frame, text="Wall damping (typical range [0.01,0.5])").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+# Create a label for the damping entry
 
 # Create an entry widget for the room damping
+ttk.Label(room_frame, text="Wall absorbtion [0.01 ... 0.5]").grid(row=0, column=0, padx=5, pady=5, sticky="w")
 damping_entry = ttk.Entry(room_frame)
 damping_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 damping_entry.insert(0, str(0.1))
+ttk.Label(room_frame, text="HF damping [0 ... 1]").grid(row=0, column=2, padx=5, pady=5, sticky="w")
+hfdamping_entry = ttk.Entry(room_frame)
+hfdamping_entry.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
+hfdamping_entry.insert(0, str(0.1))
 
 # Create a frame for the buttons
 buttons_frame = ttk.Frame(root)
