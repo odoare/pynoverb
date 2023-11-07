@@ -1,16 +1,15 @@
 import sys
 sys.path.insert(0, "../pynoverb")
 
+CANVAS_SIZE = 400
+global selind
+global f
+
 import tkinter as tk
 from tkinter import ttk, filedialog
 from pynoverb import rev3_binau_hfdamp, get_n_from_r
 import numpy as np
-# import matplotlib.pyplot as plt
-from scipy.io import wavfile
-
-CANVAS_SIZE = 400
-global selind
-global f
+from pynoverb import writewav24
 
 def calculate_and_export():
     l = np.array([float(size_entries[label].get()) for label in size_labels])
@@ -28,7 +27,8 @@ def calculate_and_export():
         # plt.plot(impl)
         # plt.plot(impr)
         fichier = directory_entry.get()+'/'+filename_entry.get()+'_'+str(ind)+'.wav'
-        wavfile.write(fichier,44100,np.array([impl,impr]).T)
+        writewav24(fichier,44100,np.array([impl,impr]).T)
+        # wavfile.write(fichier+'_scipy.wav',44100,np.array([impl,impr]).T)
     # plt.show()
     pass
 

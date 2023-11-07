@@ -10,3 +10,4 @@ from .pynoverb import (get_n_from_r,
                             rev3_binau_hfdamp,
                             rev4)
 
+from .wavio import (readwav,writewav24)

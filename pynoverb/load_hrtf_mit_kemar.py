@@ -1,7 +1,7 @@
 
 import numpy as np
-from scipy.io import wavfile
 import os
+from .wavio import readwav
 
 location = os.path.dirname(os.path.realpath(__file__))
 datapath = location+'/hrtf/mit_kemar/'
@@ -22,18 +22,25 @@ for ind1,el in enumerate(ELEVATIONS):
         if az<=180:
             fich = chemin+'H'+str(el)+'e'+str(round(az)).zfill(3)+'a.wav'
             #print(fich)
-            fs,y = wavfile.read(fich)
+            #fs,y = wavfile.read(fich)
+            fs, sw, y = readwav(file=fich)
+            # print(type(y))
+            # print(y.max())
             lhrtf[ind1,ind2,:] = y[:,0]
             rhrtf[ind1,ind2,:] = y[:,1]
         else:
             try:
                 fich = chemin+'H'+str(el)+'e'+str(int(np.round(360-az))).zfill(3)+'a.wav'
                 #print(fich)
-                fs,y = wavfile.read(fich)
+                # fs,y = wavfile.read(fich)
+                fs, sw, y = readwav(file=fich)
+                # print(type(y))
             except:
                 fich = chemin+'H'+str(el)+'e'+str(int(np.round(360-az)+1)).zfill(3)+'a.wav'
                 #print(fich)
-                fs,y = wavfile.read(fich)
+                # fs,y = wavfile.read(fich)
+                fs, sw, y = readwav(file=fich)
+                # print(type(y))
             lhrtf[ind1,ind2,:] = y[:,1]
             rhrtf[ind1,ind2,:] = y[:,0]
 

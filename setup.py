@@ -18,7 +18,7 @@ setup(
     packages=find_packages(),
     package_data={'pynoverb': ['hrtf/mit_kemar/*.wav']},
     include_package_data=True,
-    install_requires=['numpy','scipy','numba'],
+    install_requires=['numpy','numba'],
     keywords=['Python', 'Binaural processing', 'Signal processing', 'Artificial reverberation'],
     classifiers=[
         "Development Status :: 3 - Alpha",
