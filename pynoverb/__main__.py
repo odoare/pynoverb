@@ -1,4 +1,12 @@
-# __main__.py
+# pynoverb/__main__.py
+#
+# -------------------------------------------------
+# Python functions to create room impulse responses
+# -------------------------------------------------
+#
+# Part of pynoverb package
+# (c) OD - 2023
+# https://github.com/odoare/pynoverb
 
 import sys, argparse
 import pynoverb as pbv

@@ -1,4 +1,12 @@
-# __init__.py
+# pynoverb/__init__.py
+#
+# -------------------------------------------------
+# Python functions to create room impulse responses
+# -------------------------------------------------
+#
+# Part of pynoverb package
+# (c) OD - 2023
+# https://github.com/odoare/pynoverb
 
 from .pynoverb import (get_n_from_r,
                             rev1, 

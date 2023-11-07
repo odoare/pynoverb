@@ -1,4 +1,13 @@
-#%%
+# pynoverb/pynoverb.py
+#
+# -------------------------------------------------
+# Python functions to create room impulse responses
+# -------------------------------------------------
+#
+# Part of pynoverb package
+# (c) OD - 2023
+# https://github.com/odoare/pynoverb
+
 import numpy as np
 from numba import njit,prange
 

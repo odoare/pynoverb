@@ -1,4 +1,13 @@
 # -*- coding: utf-8 -*-
+# setup.py
+#
+# -------------------------------------------------
+# Python functions to create room impulse responses
+# -------------------------------------------------
+#
+# Part of pynoverb package
+# (c) OD - 2023
+# https://github.com/odoare/pynoverb
 
 from setuptools import setup, find_packages
 

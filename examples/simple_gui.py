@@ -1,3 +1,22 @@
+# -*- coding: utf-8 -*-
+# examples/simple_gui.py
+#
+# -------------------------------------------------
+# Graphical user interface for pynoverb
+#
+# With this program you can :
+# - Adjust room dimensions and wall properties
+# - Select listener properties
+# - Graphically create source points
+# - Export binaural impulse responses for each
+#   source point in a chosen directory
+# -------------------------------------------------
+#
+# Example program for the pynoverb package
+# (c) OD - 2023
+# https://github.com/odoare/pynoverb
+
+
 import sys
 sys.path.insert(0, "../pynoverb")
 
