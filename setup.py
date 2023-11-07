@@ -21,7 +21,7 @@ setup(
     name="pynoverb",
     version='0.0.1',
     author="Olivier Doaré",
-    url='https://github.com/odoare/pynoverb'
+    url='https://github.com/odoare/pynoverb',
     author_email="<olivier.doare@ensta-paris.fr>",
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
