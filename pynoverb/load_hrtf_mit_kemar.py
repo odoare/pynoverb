@@ -1,4 +1,15 @@
 
+# pynoverb/load_hrtf_mit_kemar.py
+#
+# -------------------------------------------------
+# Imports HRTF
+# -------------------------------------------------
+#
+# Part of pynoverb package
+# (c) OD - 2023
+# https://github.com/odoare/pynoverb
+
+
 import numpy as np
 import os
 from .wavio import readwav
