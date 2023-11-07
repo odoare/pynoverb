@@ -16,7 +16,6 @@
 # (c) OD - 2023
 # https://github.com/odoare/pynoverb
 
-
 import sys
 sys.path.insert(0, "../pynoverb")
 
@@ -30,12 +29,25 @@ from pynoverb import rev3_binau_hfdamp, get_n_from_r
 import numpy as np
 from pynoverb import writewav24
 
+def get_room_dimensions():
+    return np.array([float(size_entries[label].get()) for label in size_labels])
+
+def get_listener_pos():
+    return np.array([float(size_entries[label].get()) for label in size_labels])
+
+def get_wall_absorbtion():
+    return float(damping_entry.get())
+
+def get_wall_hfdamping():
+    return float(hfdamping_entry.get())
+
 def calculate_and_export():
-    l = np.array([float(size_entries[label].get()) for label in size_labels])
-    x = np.array([float(listener_entries[label].get()) for label in listener_labels])
-    r = 1 - float(damping_entry.get())
-    d = float(hfdamping_entry.get())
+    l = get_room_dimensions()
+    x = get_listener_pos()
+    r = 1 - get_wall_absorbtion()
+    d = get_wall_hfdamping()
     n = int(get_n_from_r(r))
+    basefich = directory_entry.get()+'/'+filename_entry.get()
     for ind, s in enumerate(source_listbox.get(0, tk.END)):
         s = np.array([float(val) for val in s])  # Convert the string values to float
         # print(str(ind)+'     '+str(s))
@@ -45,10 +57,11 @@ def calculate_and_export():
         impl,impr = rev3_binau_hfdamp(n=n,l=l,x=x,s=s,r=r,d=d)
         # plt.plot(impl)
         # plt.plot(impr)
-        fichier = directory_entry.get()+'/'+filename_entry.get()+'_'+str(ind)+'.wav'
+        fichier = basefich+'_'+str(ind)+'.wav'
         writewav24(fichier,44100,np.array([impl,impr]).T)
         # wavfile.write(fichier+'_scipy.wav',44100,np.array([impl,impr]).T)
     # plt.show()
+    write_state_to_file(basefich+".txt")
     pass
 
 def browse_directory():
@@ -56,6 +69,33 @@ def browse_directory():
     if directory_path:
         directory_entry.delete(0, tk.END)
         directory_entry.insert(0, directory_path)
+
+def write_state_to_file(filename:str):
+    with open(filename, "w") as file1:
+        # Writing data to a file
+        file1.write("# Pynoverb data \n")
+        file1.write("# ------------- \n")
+        file1.write("\n")
+        file1.write("# Room dimensions \n")
+        for a in get_room_dimensions():
+            file1.write(str(a)+" ")
+        file1.write("\n\n")
+        file1.write("# Wall absorbtion \n")
+        file1.write(str(get_wall_absorbtion())+"\n")
+        file1.write("\n")
+        file1.write("# High frequency damping \n")
+        file1.write(str(get_wall_hfdamping())+"\n")
+        file1.write("\n")
+        file1.write("# Listener position \n")
+        for a in get_listener_pos():
+            file1.write(str(a)+" ")
+        file1.write("\n\n")
+        file1.write("# Sources positions \n")
+        for i,s in enumerate(source_listbox.get(0, tk.END)):
+            file1.write(str(i)+": ")
+            for a in s:
+                file1.write(str(a)+" ")
+            file1.write("\n")
 
 def quit_app():
     root.quit()
