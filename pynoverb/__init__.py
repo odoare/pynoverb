@@ -16,6 +16,7 @@ from .pynoverb import (get_n_from_r,
                             rev3_binau,
                             rev3_binau_noel,
                             rev3_binau_hfdamp,
+                            rev3_binau_hfdamp_par,
                             rev4)
 
 from .wavio import (readwav,writewav24)

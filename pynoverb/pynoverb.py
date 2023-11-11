@@ -343,7 +343,7 @@ def rev3_binau(n=100,
         print(str(i0+n)+'/'+str(2*n))
     return outl,outr
 
-@njit()
+@njit(parallel=False)
 def rev3_binau_hfdamp(n=100,
          fs=44100,
          l=np.array((4,3,3.5)),
@@ -352,7 +352,7 @@ def rev3_binau_hfdamp(n=100,
          r=0.9,
          d=0.1):
     """
-    3D reverberator, stereo, binaural version
+    3D reverberator, stereo, binaural version, with high frequency damping
     For each echo grain incoming to the receiver,
     an HRTF is applied base on the azimutal and elevation angles
     between head and beam direction.
@@ -377,11 +377,11 @@ def rev3_binau_hfdamp(n=100,
     outl = np.zeros(long+L)
     outr = np.zeros(long+L)
     xp = np.zeros(3)
-    for i0 in prange(-n,n+1):
+    for i0 in range(-n,n+1):
         xp[0] = 2*np.ceil(i0/2)*l[0]+(-1)**(i0)*s[0]
-        for i1 in prange(-n,n+1):
+        for i1 in range(-n,n+1):
             xp[1] = 2*np.ceil(i1/2)*l[1]+(-1)**(i1)*s[1]
-            for i2 in prange(-n,n+1):
+            for i2 in range(-n,n+1):
                 xp[2] = 2*np.ceil(i2/2)*l[2]+(-1)**(i2)*s[2]
                 dist = np.sqrt((xp[0]-x[0])**2+(xp[1]-x[1])**2+(xp[2]-x[2])**2)
                 # Starting index for rebound sound (time of arrival is dist/340)
@@ -390,10 +390,79 @@ def rev3_binau_hfdamp(n=100,
                 a = r**(abs(i0)+abs(i1)+abs(i2))
                 alpha_i = elev_ind(xp,x)
                 N = i0+i1+i2
-                outl[indice:indice+L] += lop(fs,d,np.abs(N),lhrtf[alpha_i,azim_ind(xp[0:2],x[0:2],rnd=AZIMUTHSTEPS[alpha_i]),:])*(-1)**(i0+i1+i2)*a/dist
-                outr[indice:indice+L] += lop(fs,d,np.abs(N),rhrtf[alpha_i,azim_ind(xp[0:2],x[0:2],rnd=AZIMUTHSTEPS[alpha_i]),:])*(-1)**(i0+i1+i2)*a/dist
-        print(str(i0+n)+'/'+str(2*n))
+                # outl[indice:indice+L] += lop(fs,d,np.abs(N),lhrtf[alpha_i,azim_ind(xp[0:2],x[0:2],rnd=AZIMUTHSTEPS[alpha_i]),:])*(-1)**(i0+i1+i2)*a/dist
+                # outr[indice:indice+L] += lop(fs,d,np.abs(N),rhrtf[alpha_i,azim_ind(xp[0:2],x[0:2],rnd=AZIMUTHSTEPS[alpha_i]),:])*(-1)**(i0+i1+i2)*a/dist
+                outl[indice:indice+L] += lop(fs,d,np.abs(N),lhrtf[alpha_i,azim_ind(xp[0:2],x[0:2],rnd=AZIMUTHSTEPS[alpha_i]),:])*a/dist
+                outr[indice:indice+L] += lop(fs,d,np.abs(N),rhrtf[alpha_i,azim_ind(xp[0:2],x[0:2],rnd=AZIMUTHSTEPS[alpha_i]),:])*a/dist
+        # print(str(i0+n)+'/'+str(2*n))
     return outl,outr
+
+@njit(parallel=True)
+def rev3_binau_hfdamp_par(n=100,
+         fs:int=44100,
+         l:np.array=np.array((4,3,3.5)),
+         s:np.array=np.array((1,2,3)),
+         x:np.array=np.array((2,1,0.7)),
+         r:float=0.9,
+         d:float=0.1,
+         nc:int=4):
+    """
+    3D reverberator, stereo, binaural version, with tunable high frequency damping
+    For each echo grain incoming to the receiver,
+    an HRTF is applied base on the azimutal and elevation angles
+    between head and beam direction. Parallel version.
+
+    Args:
+        n (int, optional): Number of rebounds. Defaults to 100.
+        fs (int, optional): Sampling frequency. Defaults to 44100.
+        l (numpy.array, optional): Room dimensions in meters. Defaults to np.array((4,3,3.5)).
+        s (numpy.array, optional): Source position in meters. Defaults to np.array((1,2,3)).
+        x (numpy.array, optional): Receiver position in meters. Defaults to np.array((2,1,0.7)).
+        r (float, optional): Wall reflexion coef. Defaults to 0.9
+        d (float, optional): Wall reflexion high frequency damping. Defaults to 0.1
+        nc (int,optional): Number of cores (number of parallel loops)
+
+    Returns:
+        tuple: Acoustic impulse response from source to receiver in the form
+        of a tuple of numpy arrays.
+    """
+    dur = np.sqrt(np.sum(((n+1)*l)**2))/340
+    #print(dur)
+    long = int(np.ceil(dur*fs))
+    #print(long)
+    outl = np.zeros((long+L,nc))
+    outr = np.zeros((long+L,nc))
+    xp = np.zeros((3,nc))
+    dist = np.zeros(nc)
+    chunksize = np.floor((2*n+1)/nc)
+    start = np.zeros(nc)
+    end = np.zeros(nc)
+    for ic in prange(0,nc):
+        start[ic] = -n + ic*chunksize
+        end[ic] = -n + (ic+1)*chunksize
+        if ic==nc-1:
+            end[ic] = n
+        for i0 in range(start[ic],end[ic]):
+            xp[0,ic] = 2*np.ceil(i0/2)*l[0]+(-1)**(i0)*s[0]
+            for i1 in range(-n,n+1):
+                xp[1,ic] = 2*np.ceil(i1/2)*l[1]+(-1)**(i1)*s[1]
+                for i2 in range(-n,n+1):
+                    xp[2,ic] = 2*np.ceil(i2/2)*l[2]+(-1)**(i2)*s[2]
+                    dist = np.sqrt((xp[0,ic]-x[0])**2+(xp[1,ic]-x[1])**2+(xp[2,ic]-x[2])**2)
+                    # Starting index for rebound sound (time of arrival is dist/340)
+                    indice = int(np.round(dist/340*fs))
+                    # absorbtion coefficient
+                    a = r**(abs(i0)+abs(i1)+abs(i2))
+                    alpha_i = elev_ind(xp[:,ic],x)
+                    N = i0+i1+i2
+                    # outl[indice:indice+L,ic] += lop(fs,d,np.abs(N),lhrtf[alpha_i,azim_ind(xp[0:2,ic],x[0:2],rnd=AZIMUTHSTEPS[alpha_i]),:])*(-1)**(i0+i1+i2)*a/dist
+                    # outr[indice:indice+L,ic] += lop(fs,d,np.abs(N),rhrtf[alpha_i,azim_ind(xp[0:2,ic],x[0:2],rnd=AZIMUTHSTEPS[alpha_i]),:])*(-1)**(i0+i1+i2)*a/dist
+                    outl[indice:indice+L,ic] += lop(fs,d,np.abs(N),lhrtf[alpha_i,azim_ind(xp[0:2,ic],x[0:2],rnd=AZIMUTHSTEPS[alpha_i]),:])*a/dist
+                    outr[indice:indice+L,ic] += lop(fs,d,np.abs(N),rhrtf[alpha_i,azim_ind(xp[0:2,ic],x[0:2],rnd=AZIMUTHSTEPS[alpha_i]),:])*a/dist
+            # print(str(i0+n)+'/'+str(2*n))
+    # print(start)
+    # print(end)
+    return np.sum(outl,axis=1),np.sum(outr,axis=1)
 
 @njit(parallel=True)
 def rev3(n=100,
