@@ -25,9 +25,13 @@ global f
 
 import tkinter as tk
 from tkinter import ttk, filedialog
-from pynoverb import rev3_binau_hfdamp, get_n_from_r
+from pynoverb import rev3_binau_hfdamp_par, get_n_from_r
 import numpy as np
 from pynoverb import writewav24
+import os
+
+nc = int(np.ceil(os.cpu_count()/3))
+print(nc)
 
 def get_room_dimensions():
     return np.array([float(size_entries[label].get()) for label in size_labels])
@@ -49,12 +53,13 @@ def calculate_and_export():
     n = int(get_n_from_r(r))
     basefich = directory_entry.get()+'/'+filename_entry.get()
     for ind, s in enumerate(source_listbox.get(0, tk.END)):
+        infos_string.set("Calculating and exporting IRs for source "+str(ind))
         s = np.array([float(val) for val in s])  # Convert the string values to float
         # print(str(ind)+'     '+str(s))
         source_listbox.selection_set((ind,))
         update_selected_entry()
         root.update()
-        impl,impr = rev3_binau_hfdamp(n=n,l=l,x=x,s=s,r=r,d=d)
+        impl,impr = rev3_binau_hfdamp_par(n=n,l=l,x=x,s=s,r=r,d=d,nc=nc)
         # plt.plot(impl)
         # plt.plot(impr)
         fichier = basefich+'_'+str(ind)+'.wav'
@@ -120,16 +125,29 @@ def update_canvas(event=None):
     x, y, z = size_values
     maxlength = max(x,z+y)
     f = (CANVAS_SIZE-50)/maxlength
+
+    # Draw room rectangles
     canvas.create_rectangle(20, swapy(20), 20 + x*f, swapy(20+y*f), outline="black")
-    canvas.create_rectangle(20, swapy(30+y*f), 20 + x*f, swapy(30+(z+y)*f), outline="black")
+    canvas.create_rectangle(20, swapy(40+y*f), 20 + x*f, swapy(40+(z+y)*f), outline="black")
+
+    # Draw arrow axes
+    canvas.create_line(20, swapy(20), 20+f, swapy(20), arrow=tk.LAST)
+    canvas.create_line(20, swapy(20), 20, swapy(20+f), arrow=tk.LAST)
+    canvas.create_line(20, swapy(40+f*y), 20+f, swapy(40+f*y), arrow=tk.LAST)
+    canvas.create_line(20, swapy(40+f*y), 20, swapy(40+y*f+f), arrow=tk.LAST)
+    canvas.create_text(20+f, swapy(8), text="x", font=('Times 14 italic'))
+    canvas.create_text(8, swapy(20+f), text="y", font=('Times 14 italic'))
+    canvas.create_text(20+f, swapy(28+y*f), text="x", font=('Times 14 italic'))
+    canvas.create_text(8, swapy(30+y*f+f), text="z", font=('Times 14 italic'))
+
     # Draw the source circle in the xy box
     canvas.create_oval(20 + source_values[0]*f - 8, swapy(20+source_values[1]*f - 8), 20 + source_values[0]*f + 8, swapy(20+source_values[1]*f + 8),outline='red')
     # Draw the listener circle in xy box
     canvas.create_oval(20 + listener_values[0]*f - 8, swapy(20+listener_values[1]*f - 8), 20 + listener_values[0]*f + 8, swapy(20+listener_values[1]*f + 8), fill="blue")
     # Draw the source circle in the xz box
-    canvas.create_oval(20 + source_values[0]*f - 8, swapy(30+(source_values[2]+y)*f - 8), 20 + source_values[0]*f + 8, swapy(30+(source_values[2]+y)*f + 8),outline='red')
+    canvas.create_oval(20 + source_values[0]*f - 8, swapy(40+(source_values[2]+y)*f - 8), 20 + source_values[0]*f + 8, swapy(40+(source_values[2]+y)*f + 8),outline='red')
     # Draw the listener circle in xz box
-    canvas.create_oval(20 + listener_values[0]*f - 8, swapy(30+(listener_values[2]+y)*f - 8), 20 + listener_values[0]*f + 8, swapy(30+(listener_values[2]+y)*f + 8), fill="blue")
+    canvas.create_oval(20 + listener_values[0]*f - 8, swapy(40+(listener_values[2]+y)*f - 8), 20 + listener_values[0]*f + 8, swapy(40+(listener_values[2]+y)*f + 8), fill="blue")
 
     for ind, entry in enumerate(source_listbox.get(0, tk.END)):
         entry = [float(val) for val in entry]  # Convert the string values to float
@@ -192,6 +210,35 @@ def modify_entry(event=None):
         # print (source_values)
     update_canvas()
 
+def show_damping_message(event=None):
+    infos_string.set("The smaller is this value the longer is the calculation")
+
+def hide_damping_message(event=None):
+    infos_string.set("")
+
+def show_directory_message(event=None):
+    infos_string.set("The directory where the IRs will be exported")
+
+def hide_directory_message(event=None):
+    infos_string.set("")
+
+def show_canvas_message(event=None):
+    infos_string.set("Left click in the xy zone to add a new source")
+
+def hide_canvas_message(event=None):
+    infos_string.set("")
+
+def show_source_message(event=None):
+    infos_string.set("Select a source to delete with DEL or modify below")
+
+def hide_source_message(event=None):
+    infos_string.set("")
+
+def show_filename_message(event=None):
+    infos_string.set("Write here the base name of all file names")
+
+def hide_filename_message(event=None):
+    infos_string.set("")
 
 # Create the main window
 root = tk.Tk()
@@ -206,6 +253,8 @@ ttk.Label(canvas_frame, text="Room").grid(row=0, column=0, padx=5, pady=5)
 canvas = tk.Canvas(canvas_frame, width=CANVAS_SIZE, height=CANVAS_SIZE, bg='white')
 canvas.grid(row=1, column=0, padx=5, pady=5)
 canvas.bind("<Button-1>", add_entry)
+canvas.bind("<Enter>", show_canvas_message)
+canvas.bind("<Leave>", hide_canvas_message)
 
 # Create a frame for list box
 list_frame = tk.Frame(canvas_frame)
@@ -217,6 +266,8 @@ source_listbox = tk.Listbox(list_frame, selectmode=tk.SINGLE,height=20)
 source_listbox.grid(row=1, column=0, padx=5, pady=5)
 source_listbox.bind('<<ListboxSelect>>', update_selected_entry)
 source_listbox.bind('<Delete>', delete_entry)
+source_listbox.bind('<Enter>', show_source_message)
+source_listbox.bind('<Leave>', hide_source_message)
 
 # Create a frame for the size and listener
 sizelist_frame = tk.Frame(root)
@@ -283,10 +334,15 @@ room_frame.grid(row=2, column=0, columnspan=3, padx=10, pady=10, sticky="w")
 # Create a label for the damping entry
 
 # Create an entry widget for the room damping
-ttk.Label(room_frame, text="Wall absorbtion [0.01 ... 0.5]").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+damping_label = ttk.Label(room_frame, text="Wall absorbtion [0.01 ... 0.5]")
+damping_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+damping_label.bind("<Enter>", show_damping_message)
+damping_label.bind("<Leave>", hide_damping_message)
 damping_entry = ttk.Entry(room_frame)
 damping_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 damping_entry.insert(0, str(0.1))
+damping_entry.bind("<Enter>", show_damping_message)
+damping_entry.bind("<Leave>", hide_damping_message)
 ttk.Label(room_frame, text="HF damping [0 ... 1]").grid(row=0, column=2, padx=5, pady=5, sticky="w")
 hfdamping_entry = ttk.Entry(room_frame)
 hfdamping_entry.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
@@ -296,13 +352,18 @@ hfdamping_entry.insert(0, str(0.1))
 buttons_frame = ttk.Frame(root)
 buttons_frame.grid(row=4, column=0, columnspan=3, padx=10, pady=10, sticky="e")
 
+# Create a label for informations
+infos_string = tk.StringVar()
+info_label = ttk.Label(buttons_frame, textvariable=infos_string)
+info_label.grid(row=0, column=0, padx=5, pady=5)
+
 # Create the "export" button
 export_button = ttk.Button(buttons_frame, text="Calculate and export IRs", command=calculate_and_export)
-export_button.grid(row=0, column=0, padx=5, pady=5)
+export_button.grid(row=0, column=1, padx=5, pady=5)
 
 # Create the "quit" button
 quit_button = ttk.Button(buttons_frame, text="Quit", command=quit_app)
-quit_button.grid(row=0, column=1, padx=5, pady=5)
+quit_button.grid(row=0, column=2, padx=5, pady=5)
 
 # Create a frame for directory and filename selection
 file_frame = ttk.Frame(root)
@@ -311,17 +372,25 @@ file_frame.grid(row=3, column=0, columnspan=3, padx=10, pady=10, sticky="w")
 # Create a "Browse" button for directory selection
 browse_button = ttk.Button(file_frame, text="Browse for directory", command=browse_directory)
 browse_button.grid(row=0, column=0, padx=5, pady=5)
+browse_button.bind("<Enter>",show_directory_message)
+browse_button.bind("<Leave>",hide_directory_message)
 
 # Create an entry widget for directory path
 directory_entry = ttk.Entry(file_frame,width=50)
 directory_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+directory_entry.bind("<Enter>",show_directory_message)
+directory_entry.bind("<Leave>",hide_directory_message)
 
 # Create a label for the filename entry
-ttk.Label(file_frame, text="Filename base").grid(row=1, column=0, padx=5, pady=5, sticky="w")
-
+filename_label = ttk.Label(file_frame, text="Filename base")
+filename_label.grid(row=1, column=0, padx=5, pady=5, sticky="w")
+filename_label.bind('<Enter>',show_filename_message)
+filename_label.bind('<Leave>',hide_filename_message)
 # Create an entry widget for the filename
 filename_entry = ttk.Entry(file_frame)
 filename_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+filename_entry.bind('<Enter>',show_filename_message)
+filename_entry.bind('<Leave>',hide_filename_message)
 
 # Initialize the canvas
 update_canvas()
