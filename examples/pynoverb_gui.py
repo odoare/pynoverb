@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# examples/simple_gui.py
+# examples/pynoverb_gui.py
 #
 # -------------------------------------------------
 # Graphical user interface for pynoverb
