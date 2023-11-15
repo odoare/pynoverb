@@ -25,10 +25,11 @@ global f
 
 import tkinter as tk
 from tkinter import ttk, filedialog
-from pynoverb import rev3_binau_hfdamp_par, get_n_from_r
+from pynoverb import rev3_binau_hfdamp_par, rev3_binau_hfdamp_perwalldamp_par, get_n_from_r
 import numpy as np
 from pynoverb import writewav24
 import os
+import time
 
 nc = int(np.ceil(os.cpu_count()/3))
 print(nc)
@@ -37,10 +38,13 @@ def get_room_dimensions():
     return np.array([float(size_entries[label].get()) for label in size_labels])
 
 def get_listener_pos():
-    return np.array([float(size_entries[label].get()) for label in size_labels])
+    return np.array([float(listener_entries[label].get()) for label in listener_labels])
 
 def get_wall_absorbtion():
-    return float(damping_entry.get())
+    out = np.fromstring(damping_entry.get(),sep=',')
+    if len(out)!=1 and len(out)!=6:
+        out = None
+    return out
 
 def get_wall_hfdamping():
     return float(hfdamping_entry.get())
@@ -48,10 +52,15 @@ def get_wall_hfdamping():
 def calculate_and_export():
     l = get_room_dimensions()
     x = get_listener_pos()
+    a = get_wall_absorbtion()
+    if type(a)==type(None):
+        infos_string.set("Problem parsing wall damping entry. \n Has to be a single float or six flots, comma separated.")
+        return None
     r = 1 - get_wall_absorbtion()
     d = get_wall_hfdamping()
-    n = int(get_n_from_r(r))
+    n = int(get_n_from_r(max(r)))
     basefich = directory_entry.get()+'/'+filename_entry.get()
+    t = time.time()
     for ind, s in enumerate(source_listbox.get(0, tk.END)):
         infos_string.set("Calculating and exporting IRs for source "+str(ind))
         s = np.array([float(val) for val in s])  # Convert the string values to float
@@ -59,13 +68,18 @@ def calculate_and_export():
         source_listbox.selection_set((ind,))
         update_selected_entry()
         root.update()
-        impl,impr = rev3_binau_hfdamp_par(n=n,l=l,x=x,s=s,r=r,d=d,nc=nc)
+        if len(r)==1:
+            impl,impr = rev3_binau_hfdamp_par(n=n,l=l,x=x,s=s,r=r,d=d,nc=nc)
+        else:
+            impl,impr = rev3_binau_hfdamp_perwalldamp_par(n=n,l=l,x=x,s=s,r=r,d=d,nc=nc)
         # plt.plot(impl)
         # plt.plot(impr)
         fichier = basefich+'_'+str(ind)+'.wav'
         writewav24(fichier,44100,np.array([impl,impr]).T)
         # wavfile.write(fichier+'_scipy.wav',44100,np.array([impl,impr]).T)
     # plt.show()
+    t = time.time() - t
+    infos_string.set("Calculation of "+str(len(source_listbox.get(0, tk.END)))+" IRs done in "+str(t)+"s." )
     write_state_to_file(basefich+".txt")
     pass
 
@@ -154,7 +168,7 @@ def update_canvas(event=None):
         #canvas.create_oval(20 + entry[0]*f - 4, swapy(20+entry[1]*f - 4), 20 + entry[0]*f + 4, swapy(20+entry[1]*f + 4), fill="red")
         #canvas.create_oval(20 + entry[0]*f - 4, swapy(30+(entry[2]+y)*f - 4), 20 + entry[0]*f + 4, swapy(30+(entry[2]+y)*f + 4), fill="red")
         canvas.create_text(20 + entry[0]*f, swapy(18+entry[1]*f), text=str(ind), font=('Helvetica 12 bold'))
-        canvas.create_text(20 + entry[0]*f, swapy(28+(entry[2]+y)*f ), text=str(ind), font=('Helvetica 12 bold') )
+        canvas.create_text(20 + entry[0]*f, swapy(38+(entry[2]+y)*f ), text=str(ind), font=('Helvetica 12 bold') )
 
     # Update the selected entry in the scrolled listbox
     selected_index = source_listbox.curselection()
