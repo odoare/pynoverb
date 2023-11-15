@@ -129,6 +129,9 @@ def lop(fs,d,n,x,order=1):
             y[i] = alpha*y[i] + alpha1*y[i-1]
     return y
 
+@njit()
+def step2(r:float,i:int):
+    return r**np.abs(np.ceil(i)/2)
 
 #%%
 @njit(parallel=True)
@@ -519,12 +522,12 @@ def rev3_binau_hfdamp_perwalldamp_par(n=100,
                     # Starting index for rebound sound (time of arrival is dist/340)
                     indice = int(np.round(dist/340*fs))
                     # absorbtion coefficient
-                    a = r[0]**(np.abs(np.ceil((i0-1)/2)))
-                    a *= r[1]**(np.abs(np.ceil((i0)/2)))
-                    a *= r[2]**(np.abs(np.ceil((i1-1)/2)))
-                    a *= r[3]**(np.abs(np.ceil((i1)/2)))
-                    a *= r[4]**(np.abs(np.ceil((i2-1)/2)))
-                    a *= r[5]**(np.abs(np.ceil((i2)/2)))
+                    a = (step2(r[0],i0-1)
+                         *step2(r[1],i0)
+                         *step2(r[2],i1-1)
+                         *step2(r[3],i1)
+                         *step2(r[4],i2-1)
+                         *step2(r[5],i2))
                     # Elevation angle
                     alpha_i = elev_ind(xp[:,ic],x)
                     N = i0+i1+i2
