@@ -44,6 +44,8 @@ def get_wall_absorbtion():
     out = np.fromstring(damping_entry.get(),sep=',')
     if len(out)!=1 and len(out)!=6:
         out = None
+    elif len(out)==1:
+        out = out[0]
     return out
 
 def get_wall_hfdamping():
@@ -56,28 +58,23 @@ def calculate_and_export():
     if type(a)==type(None):
         infos_string.set("Problem parsing wall damping entry. \n Has to be a single float or six flots, comma separated.")
         return None
-    r = 1 - get_wall_absorbtion()
+    r = 1 - a
     d = get_wall_hfdamping()
-    n = int(get_n_from_r(max(r)))
+    n = get_n_from_r(r)
     basefich = directory_entry.get()+'/'+filename_entry.get()
     t = time.time()
     for ind, s in enumerate(source_listbox.get(0, tk.END)):
         infos_string.set("Calculating and exporting IRs for source "+str(ind))
         s = np.array([float(val) for val in s])  # Convert the string values to float
-        # print(str(ind)+'     '+str(s))
         source_listbox.selection_set((ind,))
         update_selected_entry()
         root.update()
-        if len(r)==1:
+        if type(r)==np.float64:
             impl,impr = rev3_binau_hfdamp_par(n=n,l=l,x=x,s=s,r=r,d=d,nc=nc)
-        else:
+        elif type(r)==np.ndarray:
             impl,impr = rev3_binau_hfdamp_perwalldamp_par(n=n,l=l,x=x,s=s,r=r,d=d,nc=nc)
-        # plt.plot(impl)
-        # plt.plot(impr)
         fichier = basefich+'_'+str(ind)+'.wav'
         writewav24(fichier,44100,np.array([impl,impr]).T)
-        # wavfile.write(fichier+'_scipy.wav',44100,np.array([impl,impr]).T)
-    # plt.show()
     t = time.time() - t
     infos_string.set("Calculation of "+str(len(source_listbox.get(0, tk.END)))+" IRs done in "+str(t)+"s." )
     write_state_to_file(basefich+".txt")
@@ -225,7 +222,8 @@ def modify_entry(event=None):
     update_canvas()
 
 def show_damping_message(event=None):
-    infos_string.set("The smaller is this value the longer is the calculation")
+    infos_string.set("""Enter one value, or a list of 6 numbers, comma separated
+                     The smaller is this value the longer is the calculation""")
 
 def hide_damping_message(event=None):
     infos_string.set("")

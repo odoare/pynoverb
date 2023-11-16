@@ -99,7 +99,10 @@ def get_n_from_r(r):
     Returns:
         float: Number of reflections
     """
-    return np.log10(1e-3)/np.log10(r)
+    try:
+        return int(np.log10(1e-3)/np.log10(max(r)))
+    except:
+        return int(np.log10(1e-3)/np.log10(r))
 
 @njit()
 def lop(fs,d,n,x,order=1):
